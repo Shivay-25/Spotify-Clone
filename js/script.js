@@ -18,14 +18,18 @@ function secondsToMinutesSeconds(seconds) {
 
 async function getSongs(folder) {
     currFolder = folder;
+    let a = await fetch(`/${folder}/`);
+    let response = await a.text();
+    let div = document.createElement("div");
+    div.innerHTML = response;
+    let as = div.getElementsByTagName("a");
     songs = [];
 
-    try {
-        let res = await fetch(`/${folder}/info.json`);
-        let json = await res.json();
-        songs = json.songs;
-    } catch (err) {
-        console.error(`Failed to load info.json for ${folder}`, err);
+    for (let index = 0; index < as.length; index++) {
+        const element = as[index];
+        if (element.href.endsWith(".mp3")) {
+            songs.push(element.href.split(`/${folder}/`)[1]);
+        }
     }
 
     // Show all songs in playlist
@@ -57,7 +61,6 @@ async function getSongs(folder) {
     return songs;
 }
 
-
 const playMusic = (track, pause = false) => {
     currentSong.src = `/${currFolder}/` + track;
     if (!pause) {
@@ -87,7 +90,7 @@ async function displayAlbums() {
                 let info = await a.json();
 
                 cardContainer.innerHTML += `
-                    <div data-folder="songs/${folder}" class="card">
+                    <div data-folder="${folder}" class="card">
                         <div class="play">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                                  xmlns="http://www.w3.org/2000/svg">
@@ -105,12 +108,12 @@ async function displayAlbums() {
         }
     }
 
-    // Card click: load album
+    // Click handler for albums
     Array.from(document.getElementsByClassName("card")).forEach(e => {
         e.addEventListener("click", async item => {
             console.log("Fetching Songs");
             let folder = item.currentTarget.dataset.folder;
-            songs = await getSongs(folder);
+            songs = await getSongs(`songs/${folder}`);
             playMusic(songs[0]);
         });
     });
